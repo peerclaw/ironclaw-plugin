@@ -1,14 +1,14 @@
-**English** | [中文](README_zh.md)
+[English](README.md) | **中文**
 
 # peerclaw-ironclaw-plugin
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-IronClaw WASM channel plugin for [PeerClaw](https://github.com/peerclaw/peerclaw) — a P2P agent identity and trust platform.
+[PeerClaw](https://github.com/peerclaw/peerclaw) 的 IronClaw WASM 通道插件 —— 一个 P2P 智能体身份与信任平台。
 
-This plugin implements IronClaw's `sandboxed-channel` WIT interface as a WASM component, enabling PeerClaw P2P messaging within IronClaw's agent runtime.
+本插件将 IronClaw 的 `sandboxed-channel` WIT 接口实现为 WASM 组件，使 PeerClaw 的 P2P 消息传递能够在 IronClaw 的智能体运行时中运行。
 
-## Architecture
+## 架构
 
 ```
 PeerClaw Agent (Go)              IronClaw Gateway
@@ -29,57 +29,57 @@ agent/platform/ironclaw/         http://localhost:8080
     P2P Network                   IronClaw Agent
 ```
 
-The PeerClaw Go agent connects to IronClaw's gateway via REST/SSE. This WASM plugin handles the IronClaw side:
+PeerClaw Go 智能体通过 REST/SSE 连接到 IronClaw 的网关。本 WASM 插件负责处理 IronClaw 侧的逻辑：
 
-1. **Inbound**: Receives webhook POST from PeerClaw agent bridge → emits message to IronClaw agent
-2. **Outbound**: Receives AI response via `on_respond` → sends back to PeerClaw agent via HTTP callback
+1. **入站**：接收来自 PeerClaw 智能体桥接的 webhook POST 请求 → 将消息发送给 IronClaw 智能体
+2. **出站**：通过 `on_respond` 接收 AI 响应 → 通过 HTTP 回调发送回 PeerClaw 智能体
 
-## WIT Interface
+## WIT 接口
 
-This plugin implements the `sandboxed-channel` world from IronClaw's WIT definition:
+本插件实现了 IronClaw WIT 定义中的 `sandboxed-channel` world：
 
-| Callback | Purpose |
-|----------|---------|
-| `on-start` | Register `/webhook/peerclaw` endpoint |
-| `on-http-request` | Parse bridge messages, emit to agent |
-| `on-respond` | Deliver AI response to PeerClaw agent |
-| `on-broadcast` | Send proactive message to peer |
-| `on-status` | No-op (typing indicators not forwarded) |
-| `on-poll` | No-op (messages arrive via webhook) |
-| `on-shutdown` | Cleanup logging |
+| Callback | 用途 |
+|----------|------|
+| `on-start` | 注册 `/webhook/peerclaw` 端点 |
+| `on-http-request` | 解析桥接消息，发送给智能体 |
+| `on-respond` | 将 AI 响应投递给 PeerClaw 智能体 |
+| `on-broadcast` | 向对等节点发送主动消息 |
+| `on-status` | 无操作（不转发输入指示器） |
+| `on-poll` | 无操作（消息通过 webhook 到达） |
+| `on-shutdown` | 清理日志 |
 
-## Building
+## 构建
 
-Requires Rust toolchain with `wasm32-wasip2` target:
+需要安装带有 `wasm32-wasip2` 目标的 Rust 工具链：
 
 ```bash
 rustup target add wasm32-wasip2
 cargo build --target wasm32-wasip2 --release
 ```
 
-The compiled WASM component will be at:
+编译后的 WASM 组件位于：
 ```
 target/wasm32-wasip2/release/peerclaw_ironclaw_plugin.wasm
 ```
 
-## Installation
+## 安装
 
-Copy the WASM file to IronClaw's extensions directory:
+将 WASM 文件复制到 IronClaw 的扩展目录：
 
 ```bash
 cp target/wasm32-wasip2/release/peerclaw_ironclaw_plugin.wasm \
    ~/.ironclaw/extensions/peerclaw.wasm
 ```
 
-Or install via IronClaw CLI:
+或通过 IronClaw CLI 安装：
 
 ```bash
 ironclaw extension install ./peerclaw_ironclaw_plugin.wasm
 ```
 
-## Configuration
+## 配置
 
-In IronClaw's capabilities/extension config:
+在 IronClaw 的能力/扩展配置中：
 
 ```json
 {
@@ -92,9 +92,9 @@ In IronClaw's capabilities/extension config:
 }
 ```
 
-## Agent-Side Setup
+## 智能体侧设置
 
-On the PeerClaw agent side, configure the IronClaw platform adapter in your `peerclaw.yaml`:
+在 PeerClaw 智能体侧，在 `peerclaw.yaml` 中配置 IronClaw 平台适配器：
 
 ```yaml
 platform:
@@ -103,21 +103,21 @@ platform:
   auth_token: "your-bearer-token"
 ```
 
-## Bridge Protocol
+## 桥接协议
 
-The plugin uses a simple JSON protocol for webhook communication:
+本插件使用简单的 JSON 协议进行 webhook 通信：
 
-**Agent → Plugin** (POST /webhook/peerclaw):
+**智能体 → 插件** (POST /webhook/peerclaw)：
 ```json
 {"type": "chat.send", "data": {"sessionKey": "peerclaw:dm:<peer_id>", "message": "Hello"}}
 {"type": "chat.inject", "data": {"sessionKey": "peerclaw:notifications", "message": "[INFO] ...", "label": "notification"}}
 ```
 
-**Plugin → Agent** (HTTP callback):
+**插件 → 智能体** (HTTP callback)：
 ```json
 {"type": "chat.event", "data": {"sessionKey": "peerclaw:dm:<peer_id>", "state": "final", "message": "AI response"}}
 ```
 
-## License
+## 许可证
 
 [Apache-2.0](LICENSE)
