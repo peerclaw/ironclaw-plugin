@@ -153,16 +153,17 @@ impl Guest for PeerClawChannel {
 
                 // Extract peer ID from session key for user identification.
                 let user_id = extract_peer_id(&data.session_key);
+                let metadata_json = format!(
+                    r#"{{"channel":"peerclaw","sessionKey":"{}"}}"#,
+                    data.session_key
+                );
 
-                channel_host::emit_message(channel_host::EmittedMessage {
-                    user_id: &user_id,
+                channel_host::emit_message(&channel_host::EmittedMessage {
+                    user_id: user_id.clone(),
                     user_name: None,
-                    content: &data.message,
-                    thread_id: Some(&data.session_key),
-                    metadata_json: &format!(
-                        r#"{{"channel":"peerclaw","sessionKey":"{}"}}"#,
-                        data.session_key
-                    ),
+                    content: data.message,
+                    thread_id: Some(data.session_key),
+                    metadata_json,
                     attachments: vec![],
                 });
 
@@ -190,12 +191,12 @@ impl Guest for PeerClawChannel {
                 };
 
                 // Notifications are injected as system messages.
-                channel_host::emit_message(channel_host::EmittedMessage {
-                    user_id: "peerclaw-system",
-                    user_name: Some("PeerClaw"),
-                    content: &data.message,
+                channel_host::emit_message(&channel_host::EmittedMessage {
+                    user_id: "peerclaw-system".to_string(),
+                    user_name: Some("PeerClaw".to_string()),
+                    content: data.message,
                     thread_id: None,
-                    metadata_json: r#"{"channel":"peerclaw","type":"notification"}"#,
+                    metadata_json: r#"{"channel":"peerclaw","type":"notification"}"#.to_string(),
                     attachments: vec![],
                 });
 
@@ -233,7 +234,7 @@ impl Guest for PeerClawChannel {
             data: BridgeResponseData {
                 session_key,
                 state: "final".to_string(),
-                message: response.content.clone(),
+                message: response.content,
             },
         };
 
