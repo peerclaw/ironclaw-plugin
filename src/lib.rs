@@ -80,8 +80,9 @@ impl Guest for PeerClawChannel {
     fn on_start(config_json: String) -> Result<ChannelConfig, String> {
         channel_host::log(channel_host::LogLevel::Info, "PeerClaw channel starting");
 
-        let config: PluginConfig =
-            serde_json::from_str(&config_json).unwrap_or(PluginConfig { poll_interval_secs: 0 });
+        let config: PluginConfig = serde_json::from_str(&config_json).unwrap_or(PluginConfig {
+            poll_interval_secs: 0,
+        });
 
         let poll = if config.poll_interval_secs > 0 {
             Some(PollConfig {
