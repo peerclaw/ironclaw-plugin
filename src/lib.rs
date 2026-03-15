@@ -303,3 +303,98 @@ fn extract_session_key_from_metadata(metadata_json: &str) -> Option<String> {
 }
 
 export!(PeerClawChannel);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_peer_id_with_prefix() {
+        assert_eq!(extract_peer_id("peerclaw:dm:agent-abc"), "agent-abc");
+    }
+
+    #[test]
+    fn test_extract_peer_id_without_prefix() {
+        assert_eq!(extract_peer_id("some-other-key"), "some-other-key");
+    }
+
+    #[test]
+    fn test_extract_peer_id_empty_suffix() {
+        assert_eq!(extract_peer_id("peerclaw:dm:"), "");
+    }
+
+    #[test]
+    fn test_extract_session_key_from_metadata_valid() {
+        let meta = r#"{"sessionKey":"peerclaw:dm:peer-1","channel":"peerclaw"}"#;
+        assert_eq!(
+            extract_session_key_from_metadata(meta),
+            Some("peerclaw:dm:peer-1".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_session_key_from_metadata_missing() {
+        let meta = r#"{"channel":"peerclaw"}"#;
+        assert_eq!(extract_session_key_from_metadata(meta), None);
+    }
+
+    #[test]
+    fn test_extract_session_key_from_metadata_invalid_json() {
+        assert_eq!(extract_session_key_from_metadata("not json"), None);
+    }
+
+    #[test]
+    fn test_bridge_message_parse_chat_send() {
+        let json = r#"{"type":"chat.send","data":{"session_key":"peerclaw:dm:peer-1","message":"Hello"}}"#;
+        let msg: BridgeMessage = serde_json::from_str(json).unwrap();
+        assert_eq!(msg.msg_type, "chat.send");
+        let data: ChatSendData = serde_json::from_value(msg.data).unwrap();
+        assert_eq!(data.session_key, "peerclaw:dm:peer-1");
+        assert_eq!(data.message, "Hello");
+    }
+
+    #[test]
+    fn test_bridge_message_parse_chat_inject() {
+        let json = r#"{"type":"chat.inject","data":{"session_key":"peerclaw:dm:p","message":"Notification","label":"alert"}}"#;
+        let msg: BridgeMessage = serde_json::from_str(json).unwrap();
+        assert_eq!(msg.msg_type, "chat.inject");
+        let data: InjectData = serde_json::from_value(msg.data).unwrap();
+        assert_eq!(data.message, "Notification");
+        assert_eq!(data.label, Some("alert".to_string()));
+    }
+
+    #[test]
+    fn test_bridge_message_parse_invalid_json() {
+        let result: Result<BridgeMessage, _> = serde_json::from_str("not valid json");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_bridge_response_serialize() {
+        let resp = BridgeResponse {
+            msg_type: "chat.event".to_string(),
+            data: BridgeResponseData {
+                session_key: "peerclaw:dm:peer-1".to_string(),
+                state: "final".to_string(),
+                message: "AI response".to_string(),
+            },
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("chat.event"));
+        assert!(json.contains("AI response"));
+        assert!(json.contains("final"));
+    }
+
+    #[test]
+    fn test_plugin_config_default() {
+        let config: PluginConfig = serde_json::from_str("{}").unwrap();
+        assert_eq!(config.poll_interval_secs, 0);
+    }
+
+    #[test]
+    fn test_plugin_config_custom() {
+        let config: PluginConfig =
+            serde_json::from_str(r#"{"poll_interval_secs":30}"#).unwrap();
+        assert_eq!(config.poll_interval_secs, 30);
+    }
+}
