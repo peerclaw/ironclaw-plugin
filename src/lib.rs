@@ -346,7 +346,7 @@ mod tests {
 
     #[test]
     fn test_bridge_message_parse_chat_send() {
-        let json = r#"{"type":"chat.send","data":{"session_key":"peerclaw:dm:peer-1","message":"Hello"}}"#;
+        let json = r#"{"type":"chat.send","data":{"sessionKey":"peerclaw:dm:peer-1","message":"Hello"}}"#;
         let msg: BridgeMessage = serde_json::from_str(json).unwrap();
         assert_eq!(msg.msg_type, "chat.send");
         let data: ChatSendData = serde_json::from_value(msg.data).unwrap();
@@ -356,7 +356,7 @@ mod tests {
 
     #[test]
     fn test_bridge_message_parse_chat_inject() {
-        let json = r#"{"type":"chat.inject","data":{"session_key":"peerclaw:dm:p","message":"Notification","label":"alert"}}"#;
+        let json = r#"{"type":"chat.inject","data":{"sessionKey":"peerclaw:dm:p","message":"Notification","label":"alert"}}"#;
         let msg: BridgeMessage = serde_json::from_str(json).unwrap();
         assert_eq!(msg.msg_type, "chat.inject");
         let data: InjectData = serde_json::from_value(msg.data).unwrap();
